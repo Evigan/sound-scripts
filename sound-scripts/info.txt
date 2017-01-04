@@ -1,0 +1,88 @@
+filename=${1%%.*}
+extension=${1##*.}
+outputname="$filename"_levelled.$extension
+sox $1 $outputname highpass 80 lowpass 8000 compand 0.01,1 -80,-80,-55,-20,-20,-15,0,0 0 -40 0.1 norm -0.5
+
+
+http://brainwagon.org/2009/10/28/audio-processing-for-amateur-radio-voice-communications/
+http://forum.doom9.org/showthread.php?t=165807
+http://forum.doom9.org/archive/index.php/t-165807.html
+http://forum.doom9.org/showthread.php?p=779165#post779165
+
+aacplusenc
+
+1.
+$SOX "$1" "$2" \
+  remix - \
+  highpass 100 \
+  norm \
+  compand 0.05,0.2 6:-54,-90,-36,-36,-24,-24,0,-12 0 -90 0.1 \
+  vad -T 0.6 -p 0.2 -t 5 \
+  fade 0.1 \
+  reverse \
+  vad -T 0.6 -p 0.2 -t 5 \
+  fade 0.1 \
+  reverse \
+  norm -0.5
+
+2. compand 0.02,0.20 5:-60,-40,-10 -5 -90 0.1
+
+3. voice/music:
+compand 0.1,0.3 -60,-60,-30,-15,-20,-12,-4,-8,-2,-7 -2
+source: http://www.dzone.com/snippets/sox-audio-editor-settings
+and
+source: http://forums.joe.to/viewtopic.php?f=149&t=57817
+
+4. in Car
+compand 0.3,1 6:-70,-60,-20 -5 -90 0.2
+
+5.
+compand 1,4 6:-80,-80,-75,-25,0,0 -5 -30 1
+
+6. voice/radio:
+compand 0.01,1 -90,-90,-70,-70,-60,-20,0,0 -5
+source: http://icecast.imux.net/viewtopic.php?t=3462
+
+7. audio books:
+compand 0.3,5 6:-70,-60,-20 -10 -6 0.2
+source: http://www.ericphelps.com/batch/samples/MP3_Recode.txt
+Echo Companding the file to remove large volume differences...
+sox %temp%\mono.wav %temp%\out.wav compand 0.3,5 6:-70,-60,-20 -10 -6 0.2 fade 1 2> nul
+REM                                        |   | |  |   |   |   |   | |   |      |
+REM                                        |   | |  |   |   |   |   | |   |      Ignore all error messages
+REM                                        |   | |  |   |   |   |   | |   Fade-in for first second
+REM                                        |   | |  |   |   |   |   | Initial sample time
+REM                                        |   | |  |   |   |   |   Expected initial level
+REM                                        |   | |  |   |   |   Overall output gain to avoid clipping
+REM                                        |   | |  |   |   Output range from zero to this number
+REM                                        |   | |  |   Input range from 0 to this number
+REM                                        |   | |  Ignore companding below this level
+REM                                        |   | Soft knee companding
+REM                                        |   Decay time is long to prevent rising noise in pauses
+REM                                        Attack time is fast to quiet loud music bumpers
+
+
+8. podcast:
+compand 0.3,1 6:-70,-60,-20 -5 -90
+source: https://dissectionbydavid.wordpress.com/2010/10/01/using-sox-via-php-to-cleanup-podcasts/
+
+
+9. http://forum.doom9.org/showthread.php?p=779165#post779165
+
+Speech
+compand 0.1,0.3 -90,-90,-70,-55,-50,-35,-31,-31,-21,-21,0,-20 0 0 0.1
+
+Music Standard
+compand 0.1,0.3 -90,-90,-70,-58,-55,-43,-31,-31,-21,-21,0,-20 0 0 0.1
+
+Music Light
+compand 0.1,0.3 -90,-90,-70,-58,-65,-53,-41,-41,-21,-21,0,-11 0 0 0.1
+
+10.
+
+sox $1 $outputname highpass 80 lowpass 8000 compand 0.01,1 -80,-80,-55,-20,-20,-15,0,0 0 -40 0.1 norm -0.5
+
+
+http://brainwagon.org/2009/10/28/audio-processing-for-amateur-radio-voice-communications/
+
+http://forum.doom9.org/showthread.php?t=165807
