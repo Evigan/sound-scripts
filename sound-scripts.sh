@@ -1,13 +1,12 @@
 #!/bin/bash
-
 ########################################################
 #  INSTALL (Ubuntu)
 ########################################################
 function is_installed() {
-    [[ -z $(dpkg --get-selections | grep "$1") ]] && return $(false) || return $(true)
+	[[ -z $(dpkg --get-selections | grep "$1") ]] && return $(false) || return $(true)
 }
 
-function install() {
+function do_install() {
      if ! is_installed "$1"; then sudo apt-get -y install "$1"; fi
 }
 
@@ -23,10 +22,10 @@ function install_multimedia_repo() {
 
 function install_all()
 {
-    install_multimedia_repo
-    install sox     #SoX - Sound eXchange (http://sox.sourceforge.net/)
-    install lame    #LAME MP3 Encoder (http://lame.sourceforge.net/)
-    install ffmpeg  #FFmpeg - cross-platform solution to record, convert and stream audio and video (https://ffmpeg.org/)
+    #install_multimedia_repo
+    do_install sox     #SoX - Sound eXchange (http://sox.sourceforge.net/)
+    do_install lame    #LAME MP3 Encoder (http://lame.sourceforge.net/)
+    do_install ffmpeg  #FFmpeg - cross-platform solution to record, convert and stream audio and video (https://ffmpeg.org/)
                     #FFmpeg is currently used only for silence detenction. SoX can also detect silence but doesn't provide any info =(
 }
 ########################################################
