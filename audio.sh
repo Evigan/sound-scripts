@@ -30,7 +30,9 @@ function mp4() {
 }
 
 function echo_time_taken() {	
-	echo "-----\n----- Time taken: $((($(date +%s)-$1)/60)) minute(s)\n-----"
+	echo "   ---"
+	echo "   --- Time taken: $((($(date +%s)-$1)/60)) minute(s)"
+	echo "   ---"
 }
 
 function split_sox() {
@@ -41,14 +43,14 @@ function split_sox() {
 
 function split_lium() {	
 	
-	local mono_file="$1-mono-16k.wav"
+	local mono_file="$1-mono.wav"
 	local lium_file="$mono_file.seg"
 	
 	mono16k "$1" "$mono_file"
 	
 	lium "$mono_file" "$lium_file"
 
-	convert_lium_output "$lium_file" "$mono_file"
+	#convert_lium_output "$lium_file" "$mono_file"
   	
 	
   	# convert_lables_file  	
@@ -69,19 +71,25 @@ function convert_lium_output() {
 		local fields=($(echo "$line" | grep -o '[^ ]*'))
 
 		if [ "${fields[0]}" != ";;" ]; then
-			local speaker_id=${fields[7]}
-			local gender=${fields[4]}
-			local start=${fields[2]}
-			local duration=${fields[3]}
 
-			local speaker_gender=${fields[7]}-${fields[4]}
-            local start_time=$(echo "scale=2; ${fields[2]} / 100" | bc)
-            local duration_time=$(echo "scale=2; ${fields[3]} / 100" | bc)
-            local end_time=$(echo "scale=2; (${fields[2]} + ${fields[3]}) / 100" | bc)
-            local track_info="$speaker_gender; start=$start_time; duration=$duration_time; end=$end_time"
-            
-            echo $track_info
-            echo $track_info >> $audio_file.txt
+			#http://www-lium.univ-lemans.fr/diarization/doku.php/diarization
+			local show_name=${fields[0]}
+			local channel_num=${fields[1]}
+			local segment_start=${fields[2]}	# in features
+			local segment_length=${fields[3]}	# in features
+			local speaker_gender=${fields[4]}	# (U=unknown, F=female, M=Male)
+			local type_of_band=${fields[5]}		# (T=telephone, S=studio)
+			local type_of_env=${fields[6]}		# (music, speech only, …)
+			local speaker_label=${fields[7]}	# Speaker id 
+
+			local speaker=${speaker_label}-${speaker_gender}
+            local seg_start_time=$(echo "scale=2; ${segment_start} / 100" | bc)
+            local seg_length_time=$(echo "scale=2; ${segment_length} / 100" | bc)
+            local seg_end_time=$(echo "scale=2; (${segment_start} + ${segment_length}) / 100" | bc)
+
+            local segment_info="$speaker; start=$seg_start_time; len=$seg_length_time; end=$seg_end_time"
+            echo $segment_info
+            echo $segment_info >> $audio_file.txt
 
             # [ -d "$speaker_dir" ] || mkdir "$speaker_dir"
             # local c=$(printf "%04d" $count)
@@ -95,11 +103,16 @@ function merge_wavs() {
 	sox $(for f in "$1"/*.wav; do echo -n "$f "; done) $(basename $1).wav
 }
 
-function mono16k() {
-	echo "Resampling $1 to 16kHz, 1 channel, 16 bit wav."
+function mono() {
+	echo "Resampling $1 to 16kHz, 1 channel, 16 bit ${1##*.}."
+	
 	local begin=$(date +%s)
+	local infile=$1
+	local outfile=${2:-${1%.*}-mono}.${1##*.}
 
-	sox "$1" -b 16 "$2" \
+	echo "Output file : "$outfile""
+
+	sox "$infile" -b 16 "$outfile" \
 		--show-progress \
 		remix - \
 		highpass 100 \
@@ -112,13 +125,17 @@ function mono16k() {
 
 function lium() {
 	echo "Starting LIUM Speech Diarization process ..."	
+
 	local begin=$(date +%s)
+	local infile=$1
+	local outfile=${2:-${1%.*}-lium}.seg
 
 	java -Xmx2024m -jar "$LIUM_JAR" \
-  		--fInputMask="$1" \
-  		--sOutputMask="$2" \
-  		--doCEClustering $(basename "$1")
+  		--fInputMask="$infile" \
+  		--sOutputMask="$outfile" \
+  		--doCEClustering $(basename "$infile")
 
+  	soxi "$infile"
   	echo_time_taken $begin
 }
 
